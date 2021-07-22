@@ -73,9 +73,11 @@ class DonkeyServer:
         self.publish_control()
 
     def handle(self):
-        inbound_chars = self.conn.recv(2048)
-        self.inbound_buffer = self.inbound_buffer + inbound_chars
-
+        self.inbound_buffer = self.conn.recv(1024)
+        if self.inbound_buffer:
+            inbound_msg = str(self.inbound_buffer, "utf-8")
+            self.on_msg_recv(inbound_msg)
+        '''
         while self.inbound_buffer: # are there leftover chars in the buffer?
             termination = self.inbound_buffer.find("\n".encode("utf-8")) # search the buffer for packet ending
             if termination >= 0: # if packet is complete
@@ -85,7 +87,7 @@ class DonkeyServer:
                 self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
             else: # incomplete packet. wait for the next receiving.
                 break
-
+        '''     
         self.outbound_buffer_lock_.acquire()
         if self.outbound_buffer_ is not None:
             to_send = bytes(self.outbound_buffer_)
