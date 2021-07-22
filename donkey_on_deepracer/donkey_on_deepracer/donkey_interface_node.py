@@ -52,6 +52,7 @@ class DonkeyServer:
     def server_thread(self):
         self.publish_control()
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serv.settimeout(0.02)
         self.serv.bind((HOST, PORT))
         self.serv.listen(1)
         while self.on:
