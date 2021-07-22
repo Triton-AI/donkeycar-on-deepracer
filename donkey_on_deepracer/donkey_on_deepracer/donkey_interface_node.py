@@ -37,7 +37,7 @@ class DonkeyServer:
     def __init__(self, node:DonkeyInterfaceNode) -> None:
         self.on = True
         self.outbound_buffer_lock_ = threading.Lock()
-        self.outbound_buffer_ = None
+        self.outbound_buffer_ = bytes()
         self.inbound_buffer = bytes()
 
         self.img_w = 160
