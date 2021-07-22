@@ -112,6 +112,8 @@ class DonkeyServer:
                 self.addToOutbound("{\"msg_type\": \"scene_loaded\"}\n")
                 self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
                 self.addToOutbound("{\"msg_type\": \"car_loaded\"}\n")
+            elif msg_json["msg_type"] == "get_scene_names":
+                self.addToOutbound("{\"msg_type\" : \"scene_names\", \"scene_names\" : [ \"generated_road\", \"warehouse\", \"sparkfun_avc\", \"generated_track\" ]}\n")
             else:
                 self.node_.get_logger().info(f"Inbound message: {msg}")
         except Exception as e:
