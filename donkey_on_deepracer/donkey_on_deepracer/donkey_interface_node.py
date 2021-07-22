@@ -93,7 +93,8 @@ class DonkeyServer:
             self.outbound_buffer_lock_.release()
             self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
             self.conn.sendall(to_send)
-        self.outbound_buffer_lock_.release()
+        else:
+            self.outbound_buffer_lock_.release()
 
     def on_msg_recv(self, msg:str):
         try:
