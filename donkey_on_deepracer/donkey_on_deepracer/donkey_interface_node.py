@@ -73,7 +73,7 @@ class DonkeyServer:
 
     def handle(self):
         inbound_chars = self.conn.recv(2048)
-        self.inbound_buffer.extend(inbound_chars)
+        self.inbound_buffer = self.inbound_buffer + inbound_chars
 
         while self.inbound_buffer: # are there leftover chars in the buffer?
             termination = self.inbound_buffer.find(b"\n") # search the buffer for packet ending
