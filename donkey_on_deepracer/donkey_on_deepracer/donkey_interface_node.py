@@ -91,7 +91,9 @@ class DonkeyServer:
             self.outbound_buffer_ = None
             self.outbound_buffer_lock_.release()
             self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
-            self.conn.sendall(to_send)
+            while to_send:
+                sent = self.conn.send(to_send)
+                to_send = to_send[sent:]
         else:
             self.outbound_buffer_lock_.release()
 
