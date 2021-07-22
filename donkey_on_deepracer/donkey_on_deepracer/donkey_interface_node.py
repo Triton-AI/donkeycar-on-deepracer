@@ -59,7 +59,7 @@ class DonkeyServer:
             self.publish_control()
             try:
                 timer_period_in = 0.01
-                timer_period_out = 0.05
+                timer_period_out = 0.0333
                 self.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
                 self.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
                 while True:
