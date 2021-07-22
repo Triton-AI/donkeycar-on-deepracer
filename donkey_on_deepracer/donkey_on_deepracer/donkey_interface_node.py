@@ -155,6 +155,7 @@ class DonkeyServer:
         self.on = False
         self.t.join()
         self.publish_control()
+        self.serv.close()
 
     def configure_camera(self, config_dict:dict):
         self.img_w = int(config_dict.get("img_w", 160))
