@@ -102,7 +102,7 @@ class DonkeyServer:
         try:
             msg_json = json.loads(msg)
             if msg_json["msg_type"] == "control":
-                self.publish_control(msg_json.get(float("steering"), 0.0), msg_json.get(float("throttle"), 0.0))
+                self.publish_control(float(msg_json.get("steering", 0.0)), float(msg_json.get("throttle", 0.0)))
             elif msg_json["msg_type"] == "cam_config":
                 self.configure_camera(msg_json)
             else:
