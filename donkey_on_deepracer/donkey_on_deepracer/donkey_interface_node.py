@@ -25,6 +25,8 @@ class DonkeyInterfaceNode(Node):
         if len(image_msg.images) > 0:
             image_arr = self.bridge_.imgmsg_to_cv2(image_msg.images[-1])
             self.server_.send_image(image_arr)
+        else:
+            self.get_logger().warning("No new image in the sequence.")
     
     def destroy_node(self) -> bool:
         self.server_.shutdown()     
