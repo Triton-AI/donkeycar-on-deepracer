@@ -99,7 +99,8 @@ class DonkeyServer:
             msg_json = json.loads(msg)
             if msg_json["msg_type"] == "control":
                 self.publish_control(msg_json.get(float("steering"), 0.0), msg_json.get(float("throttle"), 0.0))
-        except:
+        except Exception as e:
+            self.node_.get_logger().error(e.message)
             self.node_.get_logger().error("Failed to parse incoming message")
             self.publish_control()
 
