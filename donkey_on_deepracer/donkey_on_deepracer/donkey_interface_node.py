@@ -64,7 +64,7 @@ class DonkeyServer:
                     self.handle()
                     time.sleep(0.01)
             except Exception as e:
-                self.node_.get_logger().error(e.message)
+                self.node_.get_logger().error(str(e))
                 self.publish_control()
                 self.node_.get_logger().warning("DonkeyCar disconnected. Vehicle stopped.")
                 continue
@@ -101,7 +101,7 @@ class DonkeyServer:
             if msg_json["msg_type"] == "control":
                 self.publish_control(msg_json.get(float("steering"), 0.0), msg_json.get(float("throttle"), 0.0))
         except Exception as e:
-            self.node_.get_logger().error(e.message)
+            self.node_.get_logger().error(str(e))
             self.node_.get_logger().error("Failed to parse incoming message")
             self.publish_control()
 
