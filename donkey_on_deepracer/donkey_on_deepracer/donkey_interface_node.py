@@ -53,7 +53,6 @@ class DonkeyServer:
         while self.on:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
-            self.conn.setblocking(False)
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
             self.publish_control()
             try:
@@ -72,18 +71,16 @@ class DonkeyServer:
         self.publish_control()
 
     def handle(self):
-        r, _, _ = select.select([self.conn], [], [])
-        if r:
-            self.inbound_buffer += self.conn.recv(1024)
-            while self.inbound_buffer: # are there leftover chars in the buffer?
-                termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
-                if termination >= 0: # if packet is complete
-                    inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
-                    self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
-                    self.on_msg_recv(inbound_msg)
-                    self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
-                else: # incomplete packet. wait for the next receiving.
-                    break
+        self.inbound_buffer += self.conn.recv(1024)
+        while self.inbound_buffer: # are there leftover chars in the buffer?
+            termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
+            if termination >= 0: # if packet is complete
+                inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
+                self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
+                self.on_msg_recv(inbound_msg)
+                self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
+            else: # incomplete packet. wait for the next receiving.
+                break
     
         self.outbound_buffer_lock_.acquire()
         if self.outbound_buffer_ is not None:
@@ -91,9 +88,7 @@ class DonkeyServer:
             self.outbound_buffer_ = None
             self.outbound_buffer_lock_.release()
             self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
-            while to_send:
-                sent = self.conn.send(to_send)
-                to_send = to_send[sent:]
+            self.conn.sendall(to_send)
         else:
             self.outbound_buffer_lock_.release()
 
