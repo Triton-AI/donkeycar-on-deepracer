@@ -13,7 +13,7 @@ import json, socketserver, threading, time, cv_bridge, cv2, socket, base64
 from io import BytesIO
 import numpy as np
 
-DISPLAY_MSG_TOPIC = "display_mjpeg"
+IMAGE_MSG_TOPIC = "/camera_pkg/video_mjpeg"
 SERVO_TOPIC = "/ctrl_pkg/servo_msg"
 HOST, PORT = "", 9091
 
@@ -23,7 +23,7 @@ class DonkeyInterfaceNode(Node):
         self.control_pub_ = self.create_publisher(ServoCtrlMsg, SERVO_TOPIC, 2)
         self.bridge_ = cv_bridge.CvBridge()
         self.server_ = DonkeyServer(self)
-        self.image_sub_ = self.create_subscription(CameraMsg, DISPLAY_MSG_TOPIC, self.image_callback, 2)
+        self.image_sub_ = self.create_subscription(CameraMsg, IMAGE_MSG_TOPIC, self.image_callback, 2)
     
     def image_callback(self, image_msg:CameraMsg):
         if len(image_msg.images) > 0:
