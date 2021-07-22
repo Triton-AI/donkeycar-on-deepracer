@@ -77,7 +77,7 @@ class DonkeyServer:
         self.inbound_buffer = self.inbound_buffer + inbound_chars
 
         while self.inbound_buffer: # are there leftover chars in the buffer?
-            termination = self.inbound_buffer.find(b"\n") # search the buffer for packet ending
+            termination = self.inbound_buffer.find("\n".encode("utf-8")) # search the buffer for packet ending
             if termination >= 0: # if packet is complete
                 inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
                 self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
@@ -101,6 +101,10 @@ class DonkeyServer:
             msg_json = json.loads(msg)
             if msg_json["msg_type"] == "control":
                 self.publish_control(msg_json.get(float("steering"), 0.0), msg_json.get(float("throttle"), 0.0))
+            elif msg_json["msg_type"] == "cam_config":
+                self.configure_camera(msg_json)
+            else:
+                self.node_.get_logger().info(f"Inbound message: {msg}")
         except Exception as e:
             self.node_.get_logger().error(str(e))
             self.node_.get_logger().error("Failed to parse incoming message")
