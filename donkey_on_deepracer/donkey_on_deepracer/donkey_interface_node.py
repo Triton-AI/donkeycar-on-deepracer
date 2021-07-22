@@ -52,12 +52,12 @@ class DonkeyServer:
     def server_thread(self):
         self.publish_control()
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.serv.settimeout(0.02)
         self.serv.bind((HOST, PORT))
         self.serv.listen(1)
         while self.on:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
+            self.conn.settimeout(0.02)
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
             self.publish_control()
             try:
