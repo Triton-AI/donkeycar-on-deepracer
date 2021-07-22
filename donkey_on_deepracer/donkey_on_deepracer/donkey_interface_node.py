@@ -110,6 +110,7 @@ class DonkeyServer:
                 self.addToOutbound("{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n""{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n")
             elif msg_json["msg_type"] == "load_scene":
                 self.addToOutbound("{\"msg_type\": \"scene_loaded\"}\n")
+                self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
                 self.addToOutbound("{\"msg_type\": \"car_loaded\"}\n")
             else:
                 self.node_.get_logger().info(f"Inbound message: {msg}")
