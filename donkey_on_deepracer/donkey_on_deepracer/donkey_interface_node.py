@@ -46,7 +46,7 @@ class DonkeyServer:
         self.img_h = 120
 
         self.node_ = node
-        self.t = threading.Thread(target=self.server_thread, daemon=False)
+        self.t = threading.Thread(target=self.server_thread, daemon=True)
         self.t.start()
 
     def server_thread(self):
