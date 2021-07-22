@@ -156,8 +156,8 @@ class DonkeyServer:
         self.publish_control()
 
     def configure_camera(self, config_dict:dict):
-        self.img_w = config_dict.get("img_w", 160)
-        self.img_h = config_dict.get("img_h", 120)
+        self.img_w = int(config_dict.get("img_w", 160))
+        self.img_h = int(config_dict.get("img_h", 120))
         self.node_.get_logger().info(f"Image configuration received. Width: {self.img_w}, Height: {self.img_h}.")
 
 
