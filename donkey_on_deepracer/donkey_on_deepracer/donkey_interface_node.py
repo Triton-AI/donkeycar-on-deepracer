@@ -15,7 +15,7 @@ import numpy as np
 
 DISPLAY_MSG_TOPIC = "display_mjpeg"
 SERVO_TOPIC = "/ctrl_pkg/servo_msg"
-HOST, PORT = "localhost", 9091
+HOST, PORT = "", 9091
 
 class DonkeyInterfaceNode(Node):
     def __init__(self):
