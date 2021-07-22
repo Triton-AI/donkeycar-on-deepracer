@@ -56,6 +56,7 @@ class DonkeyServer:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
+            self.addToOutbound("{\"msg_type\": \"scene_selection_ready\"}\n")
             self.publish_control()
             try:
                 timer_period_in = 0.01
@@ -106,14 +107,10 @@ class DonkeyServer:
             elif msg_json["msg_type"] == "cam_config":
                 self.configure_camera(msg_json)
             elif msg_json["msg_type"] == "get_protocol_version":
-                self.outbound_buffer_lock_.acquire()
-                self.outbound_buffer_ += "{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n".encode("utf-8")
-                self.outbound_buffer_lock_.release()
+                self.addToOutbound("{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n""{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n")
             elif msg_json["msg_type"] == "load_scene":
-                self.outbound_buffer_lock_.acquire()
-                self.outbound_buffer_ += "{\"msg_type\": \"scene_loaded\"}\n".encode("utf-8")
-                self.outbound_buffer_ += "{\"msg_type\": \"car_loaded\"}\n".encode("utf-8")
-                self.outbound_buffer_lock_.release()
+                self.addToOutbound("{\"msg_type\": \"scene_loaded\"}\n")
+                self.addToOutbound("{\"msg_type\": \"car_loaded\"}\n")
             else:
                 self.node_.get_logger().info(f"Inbound message: {msg}")
         except Exception as e:
@@ -171,7 +168,10 @@ class DonkeyServer:
         self.img_h = int(config_dict.get("img_h", 120))
         self.node_.get_logger().info(f"Image configuration received. Width: {self.img_w}, Height: {self.img_h}.")
 
-
+    def addToOutbound(self, msg: str):
+        self.outbound_buffer_lock_.acquire()
+        self.outbound_buffer_ += msg.encode("utf-8")
+        self.outbound_buffer_lock_.release()
 
 def main(args=None):
     rclpy.init(args=args)
