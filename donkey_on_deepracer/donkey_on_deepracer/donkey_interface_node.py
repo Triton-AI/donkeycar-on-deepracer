@@ -142,7 +142,7 @@ class DonkeyServer:
         self.outbound_buffer_lock_.acquire()
         self.outbound_buffer_ = bytes(json.dumps(outbound_dict) + "\n", "utf-8")
         self.outbound_buffer_lock_.release()
-        self.node_.get_logger().info("Image ready to send.")
+        # self.node_.get_logger().info("Image ready to send.")
 
     def publish_control(self, steering=0.0, throttle=0.0):
         ctrl_msg = ServoCtrlMsg()
