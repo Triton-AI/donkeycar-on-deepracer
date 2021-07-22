@@ -56,6 +56,7 @@ class DonkeyServer:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
+            time.sleep(1.0)
             self.addToOutbound("{\"msg_type\": \"scene_selection_ready\"}\n")
             self.publish_control()
             try:
