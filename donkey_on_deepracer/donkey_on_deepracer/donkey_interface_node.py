@@ -57,7 +57,7 @@ class DonkeyServer:
             self.conn, addr = self.serv.accept()
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
             time.sleep(1.0)
-            self.addToOutbound("{\"msg_type\": \"scene_selection_ready\"}\n")
+            self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
             self.publish_control()
             try:
                 timer_period_in = 0.01
