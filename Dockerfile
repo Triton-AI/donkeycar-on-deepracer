@@ -1,7 +1,7 @@
 FROM ros:foxy
 
 # Essentials
-RUN apt update && apt-key adv --refresh-keys && apt upgrade -y && rosdep update
+RUN apt update && apt upgrade -y && rosdep update
 
 RUN apt install -y nano rsync git tio gdb python3 python3-pip
 
@@ -17,7 +17,7 @@ RUN cd src && \
     git clone https://github.com/aws-deepracer/aws-deepracer-interfaces-pkg && \
     git clone https://github.com/aws-deepracer/aws-deepracer-camera-pkg && \
     git clone https://github.com/aws-deepracer/aws-deepracer-servo-pkg && \
-    git clone -b dev https://github.com/Triton-AI/donkeycar-on-deepracer 
+    git clone -b main https://github.com/Triton-AI/donkeycar-on-deepracer 
 
 # Install dependencies
 RUN rosdep install --from-paths src --ignore-src -i -y
@@ -30,4 +30,4 @@ RUN source /opt/ros/$ROS_DISTRO/setup.bash && \
 # Done
 RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
 
-ENTRYPOINT [ "ros2", "launch", "donkey_on_deepracer", "donkey_on_deepracer.launch.py" ]
+#ENTRYPOINT [ "source /root/ros2_ws/install/setup.bash", "&&", "ros2", "launch", "donkey_on_deepracer", "donkey_on_deepracer.launch.py" ]
