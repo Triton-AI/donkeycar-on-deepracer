@@ -57,9 +57,8 @@ class DonkeyServer:
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
             self.publish_control()
             try:
-                while self.on:
-                    self.handle()
-                    time.sleep(0.01)
+                timer_period = 0.01
+                self.timer = self.node_.create_timer(timer_period, self.handle)
             except Exception as e:
                 self.node_.get_logger().error(str(e))
                 self.publish_control()
@@ -67,6 +66,7 @@ class DonkeyServer:
                 continue
             finally:
                 self.conn.close()
+                self.timer.cancel()
         self.publish_control()
 
     def handle(self):
