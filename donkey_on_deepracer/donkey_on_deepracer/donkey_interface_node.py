@@ -63,7 +63,8 @@ class DonkeyServer:
                 while self.on:
                     self.handle()
                     time.sleep(0.01)
-            except:
+            except Exception as e:
+                self.node_.get_logger().error(e.message)
                 self.publish_control()
                 self.node_.get_logger().warning("DonkeyCar disconnected. Vehicle stopped.")
                 continue
