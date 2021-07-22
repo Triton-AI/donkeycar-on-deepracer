@@ -56,8 +56,10 @@ class DonkeyServer:
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
             self.publish_control()
             try:
-                timer_period = 0.01
-                self.timer = self.node_.create_timer(timer_period, self.handle)
+                timer_period_in = 0.01
+                timer_period_out = 0.05
+                self.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
+                self.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
                 while True:
                     time.sleep(1)
             except Exception as e:
@@ -67,10 +69,11 @@ class DonkeyServer:
                 continue
             finally:
                 self.conn.close()
-                self.timer.cancel()
+                self.timer_in.cancel()
+                self.timer_out.cancel()
         self.publish_control()
 
-    def handle(self):
+    def handle_inbound(self):
         self.inbound_buffer += self.conn.recv(1024)
         while self.inbound_buffer: # are there leftover chars in the buffer?
             termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
@@ -81,7 +84,8 @@ class DonkeyServer:
                 self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
             else: # incomplete packet. wait for the next receiving.
                 break
-    
+
+    def handle_outbound(self):
         self.outbound_buffer_lock_.acquire()
         if self.outbound_buffer_ is not None:
             to_send = bytes(self.outbound_buffer_)
@@ -136,6 +140,7 @@ class DonkeyServer:
         self.outbound_buffer_lock_.acquire()
         self.outbound_buffer_ = bytes(json.dumps(outbound_dict) + "\n", "utf-8")
         self.outbound_buffer_lock_.release()
+        self.node_.get_logger().info("Image ready to send.")
 
     def publish_control(self, steering=0.0, throttle=0.0):
         ctrl_msg = ServoCtrlMsg()
