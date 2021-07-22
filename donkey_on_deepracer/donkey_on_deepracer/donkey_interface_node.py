@@ -59,6 +59,7 @@ class DonkeyServer:
             try:
                 timer_period = 0.01
                 self.timer = self.node_.create_timer(timer_period, self.handle)
+                rclpy.spin()
             except Exception as e:
                 self.node_.get_logger().error(str(e))
                 self.publish_control()
