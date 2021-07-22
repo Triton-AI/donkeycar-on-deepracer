@@ -59,7 +59,7 @@ class DonkeyServer:
             self.publish_control()
             try:
                 timer_period_in = 0.01
-                timer_period_out = 0.0333
+                timer_period_out = 0.01
                 self.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
                 self.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
                 while True:
@@ -89,9 +89,9 @@ class DonkeyServer:
 
     def handle_outbound(self):
         self.outbound_buffer_lock_.acquire()
-        if self.outbound_buffer_ is not None:
+        if self.outbound_buffer_:
             to_send = bytes(self.outbound_buffer_)
-            self.outbound_buffer_ = None
+            self.outbound_buffer_ = bytes()
             self.outbound_buffer_lock_.release()
             self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
             self.conn.sendall(to_send)
@@ -105,6 +105,15 @@ class DonkeyServer:
                 self.publish_control(float(msg_json.get("steering", 0.0)), float(msg_json.get("throttle", 0.0)))
             elif msg_json["msg_type"] == "cam_config":
                 self.configure_camera(msg_json)
+            elif msg_json["msg_type"] == "get_protocol_version":
+                self.outbound_buffer_lock_.acquire()
+                self.outbound_buffer_ += "{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n".encode("utf-8")
+                self.outbound_buffer_lock_.release()
+            elif msg_json["msg_type"] == "load_scene":
+                self.outbound_buffer_lock_.acquire()
+                self.outbound_buffer_ += "{\"msg_type\": \"scene_loaded\"}\n".encode("utf-8")
+                self.outbound_buffer_ += "{\"msg_type\": \"car_loaded\"}\n".encode("utf-8")
+                self.outbound_buffer_lock_.release()
             else:
                 self.node_.get_logger().info(f"Inbound message: {msg}")
         except Exception as e:
@@ -140,7 +149,7 @@ class DonkeyServer:
                             "cte" : "0"
                         }
         self.outbound_buffer_lock_.acquire()
-        self.outbound_buffer_ = bytes(json.dumps(outbound_dict) + "\n", "utf-8")
+        self.outbound_buffer_ += bytes(json.dumps(outbound_dict) + "\n", "utf-8")
         self.outbound_buffer_lock_.release()
         # self.node_.get_logger().info("Image ready to send.")
 
