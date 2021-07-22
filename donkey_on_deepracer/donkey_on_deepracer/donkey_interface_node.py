@@ -105,14 +105,18 @@ class DonkeyServer:
             if msg_json["msg_type"] == "control":
                 self.publish_control(float(msg_json.get("steering", 0.0)), float(msg_json.get("throttle", 0.0)))
             elif msg_json["msg_type"] == "cam_config":
+                self.node_.get_logger().info(f"Inbound message: {msg}")
                 self.configure_camera(msg_json)
             elif msg_json["msg_type"] == "get_protocol_version":
-                self.addToOutbound("{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n""{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n")
+                self.node_.get_logger().info(f"Inbound message: {msg}")
+                self.addToOutbound("{\"msg_type\": \"protocol_version\",\"version\": \"2\"}\n")
             elif msg_json["msg_type"] == "load_scene":
+                self.node_.get_logger().info(f"Inbound message: {msg}")
                 self.addToOutbound("{\"msg_type\": \"scene_loaded\"}\n")
                 self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
                 self.addToOutbound("{\"msg_type\": \"car_loaded\"}\n")
             elif msg_json["msg_type"] == "get_scene_names":
+                self.node_.get_logger().info(f"Inbound message: {msg}")
                 self.addToOutbound("{\"msg_type\" : \"scene_names\", \"scene_names\" : [ \"generated_road\", \"warehouse\", \"sparkfun_avc\", \"generated_track\" ]}\n")
             else:
                 self.node_.get_logger().info(f"Inbound message: {msg}")
