@@ -109,7 +109,7 @@ class DonkeyServer:
                 self.node_.get_logger().info(f"Inbound message: {msg}")
         except Exception as e:
             self.node_.get_logger().error(str(e))
-            self.node_.get_logger().error("Failed to parse incoming message")
+            self.node_.get_logger().error(f"Failed to parse incoming message: {msg}")
             self.publish_control()
 
     def send_image(self, image):
