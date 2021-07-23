@@ -213,9 +213,11 @@ class DonkeyServer:
         self.serv.close()
 
     def configure_camera(self, config_dict:dict):
-        self.img_w = int(config_dict.get("img_w", 160))
-        self.img_h = int(config_dict.get("img_h", 120))
-        self.node_.get_logger().info(f"Image configuration received. Width: {self.img_w}, Height: {self.img_h}.")
+        img_w = int(config_dict.get("img_w", 160))
+        img_h = int(config_dict.get("img_h", 120))
+        if img_w > 0 and img_h > 0:
+            self.img_w, self.img_h = img_w, img_h
+            self.node_.get_logger().info(f"Image configuration received. Width: {self.img_w}, Height: {self.img_h}.")
 
     def addToOutbound(self, msg: str):
         self.outbound_buffer_lock_.acquire()
