@@ -46,9 +46,9 @@ class DonkeyInterfaceNode(Node):
         req = VideoStateSrv.Request()
         req.activate_video = enable
         self.get_logger().info(f"{action}activate camera")
-        error_code = cli.call(req)
-        if error_code:
-            self.get_logger().error(f"Camera node is unable to {action}activate camera.")
+        cli.call_async(req)
+        #if error_code:
+        #    self.get_logger().error(f"Camera node is unable to {action}activate camera.")
 
     def toggle_gpio(self, enable:int=0):
         """ Let the servo node toggle GPIO """
@@ -61,10 +61,10 @@ class DonkeyInterfaceNode(Node):
         req = ServoGPIOSrv.Request()
         req.enable = enable
         self.get_logger().info(f"{action} GPIO")
-        error_code = cli.call(req)
+        cli.call_async(req)
 
-        if error_code:
-            self.get_logger().error(f"Servo node is unable to {action} GPIO.")
+        #if error_code:
+        #    self.get_logger().error(f"Servo node is unable to {action} GPIO.")
 
 class DonkeyServer:
     def __init__(self, node:DonkeyInterfaceNode) -> None:
