@@ -114,6 +114,7 @@ class DonkeyServer:
                 self.node_.get_logger().warning("DonkeyCar disconnected. Vehicle stopped.")
                 self.conn.close()
                 self.server_active = False
+                self.publish_control()
         self.publish_control()
 
     def handle_inbound(self):
