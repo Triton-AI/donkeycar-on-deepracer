@@ -91,6 +91,7 @@ class DonkeyServer:
         while self.on:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
+            self.server_active = True
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
             # time.sleep(3.0)
             self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
@@ -109,6 +110,7 @@ class DonkeyServer:
             finally:
                 self.node_.get_logger().warning("DonkeyCar disconnected. Vehicle stopped.")
                 self.conn.close()
+                self.server_active = False
         self.publish_control()
 
     def handle_inbound(self):
