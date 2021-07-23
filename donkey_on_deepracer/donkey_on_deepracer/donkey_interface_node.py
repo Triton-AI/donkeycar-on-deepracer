@@ -6,6 +6,7 @@ import rclpy
 from rclpy.node import Node
 
 from deepracer_interfaces_pkg.msg import CameraMsg, ServoCtrlMsg
+from deepracer_interfaces_pkg.srv import VideoStateSrv, ServoGPIOSrv
 
 import json, threading, time, cv_bridge, cv2, socket, base64, select
 
@@ -20,6 +21,8 @@ class DonkeyInterfaceNode(Node):
         self.bridge_ = cv_bridge.CvBridge()
         self.server_ = DonkeyServer(self)
         self.image_sub_ = self.create_subscription(CameraMsg, IMAGE_MSG_TOPIC, self.image_callback, 2)
+        self.toggle_camera(1)
+        self.toggle_gpio(1)
     
     def image_callback(self, image_msg:CameraMsg):
         if len(image_msg.images) > 0:
@@ -32,6 +35,36 @@ class DonkeyInterfaceNode(Node):
         self.server_.shutdown()     
         return super().destroy_node()
 
+    def toggle_camera(self, enable:int=0):
+        """ Let the camera node start (stop) streaming """
+        action = "" if enable else "de"
+        cli = self.create_client(VideoStateSrv, "/camera_pkg/media_state")
+
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for camera node to launch...')
+
+        req = VideoStateSrv.Request()
+        req.activate_video = enable
+        self.get_logger().info(f"{action}activate camera")
+        error_code = cli.call(req)
+        if error_code:
+            self.get_logger().error(f"Camera node is unable to {action}activate camera.")
+
+    def toggle_gpio(self, enable:int=0):
+        """ Let the servo node toggle GPIO """
+        action = "enable" if enable else "disable"
+        cli = self.create_client(ServoGPIOSrv, "/ctrl_pkg/servo_gpio")
+
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for servo node to launch...')
+
+        req = ServoGPIOSrv.Request()
+        req.enable = enable
+        self.get_logger().info(f"{action} GPIO")
+        error_code = cli.call(req)
+
+        if error_code:
+            self.get_logger().error(f"Servo node is unable to {action} GPIO.")
 
 class DonkeyServer:
     def __init__(self, node:DonkeyInterfaceNode) -> None:
@@ -56,7 +89,7 @@ class DonkeyServer:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
-            time.sleep(10.0)
+            time.sleep(3.0)
             self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
             self.publish_control()
             try:
