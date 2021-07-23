@@ -40,7 +40,7 @@ class DonkeyInterfaceNode(Node):
         action = "" if enable else "de"
         cli = self.create_client(VideoStateSrv, "/camera_pkg/media_state")
 
-        while not self.cli.wait_for_service(timeout_sec=1.0):
+        while not cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waiting for camera node to launch...')
 
         req = VideoStateSrv.Request()
@@ -55,7 +55,7 @@ class DonkeyInterfaceNode(Node):
         action = "enable" if enable else "disable"
         cli = self.create_client(ServoGPIOSrv, "/ctrl_pkg/servo_gpio")
 
-        while not self.cli.wait_for_service(timeout_sec=1.0):
+        while not cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waiting for servo node to launch...')
 
         req = ServoGPIOSrv.Request()
