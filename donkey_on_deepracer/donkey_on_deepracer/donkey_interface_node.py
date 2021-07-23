@@ -53,7 +53,7 @@ class DonkeyInterfaceNode(Node):
     def toggle_gpio(self, enable:int=0):
         """ Let the servo node toggle GPIO """
         action = "enable" if enable else "disable"
-        cli = self.create_client(ServoGPIOSrv, "/ctrl_pkg/servo_gpio")
+        cli = self.create_client(ServoGPIOSrv, "/servo_pkg/servo_gpio")
 
         while not cli.wait_for_service(timeout_sec=2.0):
             self.get_logger().info('Waiting for servo node to launch...')
