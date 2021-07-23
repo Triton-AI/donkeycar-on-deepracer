@@ -97,7 +97,7 @@ class DonkeyServer:
                 timer_period_out = 0.015
                 self.node_.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
                 self.node_.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
-                while True:
+                while self.on:
                     time.sleep(1)
             except Exception as e:
                 self.node_.get_logger().error(str(e))
