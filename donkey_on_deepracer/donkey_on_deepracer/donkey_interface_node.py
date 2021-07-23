@@ -108,8 +108,6 @@ class DonkeyServer:
                 continue
             finally:
                 self.conn.close()
-                self.node_.timer_in.cancel()
-                self.node_.timer_out.cancel()
         self.publish_control()
 
     def handle_inbound(self):
@@ -127,8 +125,8 @@ class DonkeyServer:
                         else: # incomplete packet. wait for the next receiving.
                             break
                     time.sleep(PERIOD_INBOUND)
-        except BrokenPipeError:
-            raise BrokenPipeError
+        except (BrokenPipeError, ConnectionResetError) as e:
+            raise e
 
     def handle_outbound(self):
         try:
@@ -143,8 +141,8 @@ class DonkeyServer:
                 else:
                     self.outbound_buffer_lock_.release()
             time.sleep(PERIOD_OUTBOUND)
-        except BrokenPipeError:
-            raise BrokenPipeError
+        except (BrokenPipeError, ConnectionResetError) as e:
+            raise e
 
     def on_msg_recv(self, msg:str):
         try:
@@ -177,27 +175,27 @@ class DonkeyServer:
         _, img_buffer = cv2.imencode(".jpg", resized_image)
         img_b64 = str(base64.b64encode(img_buffer), "utf-8")
         outbound_dict = { "msg_type" : "telemetry", 
-                            "steering_angle" : "0.0", 
-                            "throttle" : "0.0", 
-                            "speed" : "1.0", 
+                            "steering_angle" : 0.0, 
+                            "throttle" : 0.0, 
+                            "speed" : 1.0, 
                             "image" : img_b64, 
                             "hit" : "None", 
-                            "pos_x" : "0.0", 
-                            "pos_y" : "0.0", 
-                            "pos_z" : "0.0", 
-                            "accel_x" : "0.0", 
-                            "accel_y" : "0.0", 
-                            "accel_z" : "0.0", 
-                            "gyro_x" : "0.0", 
-                            "gyro_y" : "0.0", 
-                            "gyro_z" : "0.0", 
-                            "gyro_w" : "0.0",
-                            "pitch" : "0.0", 
-                            "roll" : "0.0", 
-                            "yaw" : "0.0",
-                            "activeNode" : "0",
-                            "totalNodes" : "0",
-                            "cte" : "0"
+                            "pos_x" : 0.0, 
+                            "pos_y" : 0.0, 
+                            "pos_z" : 0.0, 
+                            "accel_x" : 0.0, 
+                            "accel_y" : 0.0, 
+                            "accel_z" : 0.0, 
+                            "gyro_x" : 0.0, 
+                            "gyro_y" : 0.0, 
+                            "gyro_z" : 0.0, 
+                            "gyro_w" : 0.0,
+                            "pitch" : 0.0, 
+                            "roll" : 0.0, 
+                            "yaw" : 0.0,
+                            "activeNode" : 0,
+                            "totalNodes" : 0,
+                            "cte" : 0.0
                         }
         self.addToOutbound(json.dumps(outbound_dict) + "\n")
 
