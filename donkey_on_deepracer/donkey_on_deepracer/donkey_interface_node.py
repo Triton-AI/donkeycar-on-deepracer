@@ -95,7 +95,7 @@ class DonkeyServer:
             try:
                 timer_period_in = 0.015
                 timer_period_out = 0.015
-                self.node_.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
+                self.node_.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound, )
                 self.node_.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
                 while self.on:
                     time.sleep(1)
@@ -112,7 +112,8 @@ class DonkeyServer:
 
     def handle_inbound(self):
         self.node_.get_logger().info("Handle inbound")
-        self.inbound_buffer += self.conn.recv(1024)
+        data = self.conn.recv(1024)
+        self.inbound_buffer += data
         while self.inbound_buffer: # are there leftover chars in the buffer?
             termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
             if termination >= 0: # if packet is complete
@@ -216,13 +217,9 @@ class DonkeyServer:
 def main(args=None):
     rclpy.init(args=args)
     node = DonkeyInterfaceNode()
-    try:
-        rclpy.spin(node)
-    except Exception as e:
-        print(str(e))   
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+    rclpy.spin(node)  
+    node.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == '__main__':
