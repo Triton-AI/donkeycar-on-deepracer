@@ -8,7 +8,7 @@ from rclpy.node import Node
 from deepracer_interfaces_pkg.msg import CameraMsg, ServoCtrlMsg
 from deepracer_interfaces_pkg.srv import VideoStateSrv, ServoGPIOSrv
 
-import json, threading, time, cv_bridge, cv2, socket, base64, select
+import json, threading, time, cv_bridge, cv2, socket, base64
 
 IMAGE_MSG_TOPIC = "/camera_pkg/video_mjpeg"
 SERVO_TOPIC = "/ctrl_pkg/servo_msg"
@@ -40,7 +40,7 @@ class DonkeyInterfaceNode(Node):
         action = "" if enable else "de"
         cli = self.create_client(VideoStateSrv, "/camera_pkg/media_state")
 
-        while not cli.wait_for_service(timeout_sec=1.0):
+        while not cli.wait_for_service(timeout_sec=2.0):
             self.get_logger().info('Waiting for camera node to launch...')
 
         req = VideoStateSrv.Request()
@@ -55,7 +55,7 @@ class DonkeyInterfaceNode(Node):
         action = "enable" if enable else "disable"
         cli = self.create_client(ServoGPIOSrv, "/ctrl_pkg/servo_gpio")
 
-        while not cli.wait_for_service(timeout_sec=1.0):
+        while not cli.wait_for_service(timeout_sec=2.0):
             self.get_logger().info('Waiting for servo node to launch...')
 
         req = ServoGPIOSrv.Request()
@@ -89,14 +89,14 @@ class DonkeyServer:
             self.node_.get_logger().info(f"Awaiting DonkeyCar connection on port {PORT}...")
             self.conn, addr = self.serv.accept()
             self.node_.get_logger().info(f"DonkeyCar connected. IP: {addr}.")
-            time.sleep(3.0)
+            # time.sleep(3.0)
             self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
             self.publish_control()
             try:
-                timer_period_in = 0.01
-                timer_period_out = 0.01
-                self.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
-                self.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
+                timer_period_in = 0.015
+                timer_period_out = 0.015
+                self.node_.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound)
+                self.node_.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
                 while True:
                     time.sleep(1)
             except Exception as e:
@@ -106,11 +106,12 @@ class DonkeyServer:
                 continue
             finally:
                 self.conn.close()
-                self.timer_in.cancel()
-                self.timer_out.cancel()
+                self.node_.timer_in.cancel()
+                self.node_.timer_out.cancel()
         self.publish_control()
 
     def handle_inbound(self):
+        self.node_.get_logger().info("Handle inbound")
         self.inbound_buffer += self.conn.recv(1024)
         while self.inbound_buffer: # are there leftover chars in the buffer?
             termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
@@ -123,6 +124,7 @@ class DonkeyServer:
                 break
 
     def handle_outbound(self):
+        self.node_.get_logger().info("Handle outbound")
         self.outbound_buffer_lock_.acquire()
         if self.outbound_buffer_:
             to_send = bytes(self.outbound_buffer_)
@@ -186,10 +188,7 @@ class DonkeyServer:
                             "totalNodes" : "0",
                             "cte" : "0"
                         }
-        self.outbound_buffer_lock_.acquire()
-        self.outbound_buffer_ += bytes(json.dumps(outbound_dict) + "\n", "utf-8")
-        self.outbound_buffer_lock_.release()
-        # self.node_.get_logger().info("Image ready to send.")
+        self.addToOutbound(json.dumps(outbound_dict) + "\n")
 
     def publish_control(self, steering=0.0, throttle=0.0):
         ctrl_msg = ServoCtrlMsg()
@@ -217,9 +216,13 @@ class DonkeyServer:
 def main(args=None):
     rclpy.init(args=args)
     node = DonkeyInterfaceNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except Exception as e:
+        print(str(e))   
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
