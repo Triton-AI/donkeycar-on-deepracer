@@ -71,6 +71,7 @@ class DonkeyInterfaceNode(Node):
 class DonkeyServer:
     def __init__(self, node:DonkeyInterfaceNode) -> None:
         self.on = True
+        self.server_active = False
         self.outbound_buffer_lock_ = threading.Lock()
         self.outbound_buffer_ = bytes()
         self.inbound_buffer = bytes()
@@ -99,20 +100,20 @@ class DonkeyServer:
                 self.t_out = threading.Thread(target=self.handle_outbound, daemon=True)
                 self.t_in.start()
                 self.t_out.start()
-                while self.on:
+                while self.on and self.server_active:
                     time.sleep(1)
             except Exception as e:
                 self.node_.get_logger().error(str(e))
                 self.publish_control()
-                self.node_.get_logger().warning("DonkeyCar disconnected. Vehicle stopped.")
                 continue
             finally:
+                self.node_.get_logger().warning("DonkeyCar disconnected. Vehicle stopped.")
                 self.conn.close()
         self.publish_control()
 
     def handle_inbound(self):
         try:
-            while self.on:
+            while self.on and self.server_active:
                     data = self.conn.recv(1024)
                     self.inbound_buffer += data
                     while self.inbound_buffer: # are there leftover chars in the buffer?
@@ -126,11 +127,12 @@ class DonkeyServer:
                             break
                     time.sleep(PERIOD_INBOUND)
         except (BrokenPipeError, ConnectionResetError) as e:
-            raise e
+            self.server_active = False
+            return
 
     def handle_outbound(self):
         try:
-            while self.on:
+            while self.on and self.server_active:
                 self.outbound_buffer_lock_.acquire()
                 if self.outbound_buffer_:
                     to_send = bytes(self.outbound_buffer_)
@@ -142,7 +144,8 @@ class DonkeyServer:
                     self.outbound_buffer_lock_.release()
             time.sleep(PERIOD_OUTBOUND)
         except (BrokenPipeError, ConnectionResetError) as e:
-            raise e
+            self.server_active = False
+            return
 
     def on_msg_recv(self, msg:str):
         try:
