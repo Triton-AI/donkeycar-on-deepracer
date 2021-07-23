@@ -13,6 +13,8 @@ import json, threading, time, cv_bridge, cv2, socket, base64
 IMAGE_MSG_TOPIC = "/camera_pkg/video_mjpeg"
 SERVO_TOPIC = "/ctrl_pkg/servo_msg"
 HOST, PORT = "", 9091
+PERIOD_INBOUND = 0.015
+PERIOD_OUTBOUND = 0.015
 
 class DonkeyInterfaceNode(Node):
     def __init__(self):
@@ -93,10 +95,10 @@ class DonkeyServer:
             self.addToOutbound("{\"msg_type\": \"need_car_config\"}\n")
             self.publish_control()
             try:
-                timer_period_in = 0.015
-                timer_period_out = 0.015
-                self.node_.timer_in = self.node_.create_timer(timer_period_in, self.handle_inbound, )
-                self.node_.timer_out = self.node_.create_timer(timer_period_out, self.handle_outbound)
+                self.t_in = threading.Thread(target=self.handle_inbound, daemon=True)
+                self.t_out = threading.Thread(target=self.handle_outbound, daemon=True)
+                self.t_in.start()
+                self.t_out.start()
                 while self.on:
                     time.sleep(1)
             except Exception as e:
@@ -111,30 +113,32 @@ class DonkeyServer:
         self.publish_control()
 
     def handle_inbound(self):
-        self.node_.get_logger().info("Handle inbound")
-        data = self.conn.recv(1024)
-        self.inbound_buffer += data
-        while self.inbound_buffer: # are there leftover chars in the buffer?
-            termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
-            if termination >= 0: # if packet is complete
-                inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
-                self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
-                self.on_msg_recv(inbound_msg)
-                self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
-            else: # incomplete packet. wait for the next receiving.
-                break
+        while self.on:
+            data = self.conn.recv(1024)
+            self.inbound_buffer += data
+            while self.inbound_buffer: # are there leftover chars in the buffer?
+                termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
+                if termination >= 0: # if packet is complete
+                    inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
+                    self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
+                    self.on_msg_recv(inbound_msg)
+                    self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
+                else: # incomplete packet. wait for the next receiving.
+                    break
+            time.sleep(PERIOD_INBOUND)
 
     def handle_outbound(self):
-        self.node_.get_logger().info("Handle outbound")
-        self.outbound_buffer_lock_.acquire()
-        if self.outbound_buffer_:
-            to_send = bytes(self.outbound_buffer_)
-            self.outbound_buffer_ = bytes()
-            self.outbound_buffer_lock_.release()
-            self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
-            self.conn.sendall(to_send)
-        else:
-            self.outbound_buffer_lock_.release()
+        while self.on:
+            self.outbound_buffer_lock_.acquire()
+            if self.outbound_buffer_:
+                to_send = bytes(self.outbound_buffer_)
+                self.outbound_buffer_ = bytes()
+                self.outbound_buffer_lock_.release()
+                self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
+                self.conn.sendall(to_send)
+            else:
+                self.outbound_buffer_lock_.release()
+        time.sleep(PERIOD_OUTBOUND)
 
     def on_msg_recv(self, msg:str):
         try:
