@@ -53,8 +53,11 @@ class DonkeyInterfaceNode(Node):
         #    self.get_logger().error(f"Camera node is unable to {action}activate camera.")
 
     def toggle_gpio(self, enable:int=0):
-        """ Let the servo node toggle GPIO """
+        """ 
+        Let the servo node toggle GPIO 
+        """
         action = "enable" if enable else "disable"
+        enable = 1 if enable == 0 else 0 # The actual enabling signal is flipped
         cli = self.create_client(ServoGPIOSrv, "/servo_pkg/servo_gpio")
 
         while not cli.wait_for_service(timeout_sec=2.0):
