@@ -113,32 +113,38 @@ class DonkeyServer:
         self.publish_control()
 
     def handle_inbound(self):
-        while self.on:
-            data = self.conn.recv(1024)
-            self.inbound_buffer += data
-            while self.inbound_buffer: # are there leftover chars in the buffer?
-                termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
-                if termination >= 0: # if packet is complete
-                    inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
-                    self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
-                    self.on_msg_recv(inbound_msg)
-                    self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
-                else: # incomplete packet. wait for the next receiving.
-                    break
-            time.sleep(PERIOD_INBOUND)
+        try:
+            while self.on:
+                    data = self.conn.recv(1024)
+                    self.inbound_buffer += data
+                    while self.inbound_buffer: # are there leftover chars in the buffer?
+                        termination = self.inbound_buffer.find("}".encode("utf-8")) # search the buffer for packet ending
+                        if termination >= 0: # if packet is complete
+                            inbound_msg = str(self.inbound_buffer[0:termination+1], "utf-8")
+                            # self.node_.get_logger().debug(f"Inbound message: {inbound_msg}")
+                            self.on_msg_recv(inbound_msg)
+                            self.inbound_buffer = self.inbound_buffer[termination+1:] # remove parsed packet from buffer
+                        else: # incomplete packet. wait for the next receiving.
+                            break
+                    time.sleep(PERIOD_INBOUND)
+        except BrokenPipeError:
+            raise BrokenPipeError
 
     def handle_outbound(self):
-        while self.on:
-            self.outbound_buffer_lock_.acquire()
-            if self.outbound_buffer_:
-                to_send = bytes(self.outbound_buffer_)
-                self.outbound_buffer_ = bytes()
-                self.outbound_buffer_lock_.release()
-                self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
-                self.conn.sendall(to_send)
-            else:
-                self.outbound_buffer_lock_.release()
-        time.sleep(PERIOD_OUTBOUND)
+        try:
+            while self.on:
+                self.outbound_buffer_lock_.acquire()
+                if self.outbound_buffer_:
+                    to_send = bytes(self.outbound_buffer_)
+                    self.outbound_buffer_ = bytes()
+                    self.outbound_buffer_lock_.release()
+                    # self.node_.get_logger().debug(f"Outbound message: {self.outbound_buffer_}")
+                    self.conn.sendall(to_send)
+                else:
+                    self.outbound_buffer_lock_.release()
+            time.sleep(PERIOD_OUTBOUND)
+        except BrokenPipeError:
+            raise BrokenPipeError
 
     def on_msg_recv(self, msg:str):
         try:
